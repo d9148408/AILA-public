@@ -1,5 +1,9 @@
 # 🚀 AILA — Aspen Intelligent Language Agent
 
+<p align="center">
+  <img src="AILA.PNG" alt="AILA Logo" width="220"/>
+</p>
+
 > 💡 *AILA* 在芬蘭語中是「**光的使者**」之意——寓意以 AI 的光芒照亮複雜的化工模擬流程。
 
 **AILA（艾拉）** 是一個基於大型語言模型（LLM）與 LangGraph 代理工作流的 Aspen Plus 自動化控制系統。透過三層式微服務架構（大腦層、控制層、執行層），本系統能讓使用者以自然語言直接操控本地端的 Aspen Plus 軟體，並具備自我錯誤修復（Error Recovery）與安全權限控管能力。
