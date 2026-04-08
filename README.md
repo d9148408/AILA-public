@@ -21,14 +21,21 @@
   * 進行 `<think>` 思維鏈推理（生成 COM 路徑或判斷 Input File 語法）。
   * 嚴格輸出符合規範的 `tool_call` JSON 格式代碼。
 
-### ⚙️ B 電腦：中樞控制層 (Orchestration Server)
+### ⚙️ B 電腦：中樞控制層 (Harness Orchestration Server)
 * **硬體定位**：應用程式伺服器 (IP: `<B_SERVER_IP>`)。
 * **運行服務**：LangGraph 狀態機代理 (Agent) + FastAPI (`Port: 8001`)。
+* **Harness Engineering 設計理念**：
+  * **Harness**（線束）概念源自電子工程中的「線束設計」——將零散的電線按功能分組、綁束、走線，使複雜的電氣系統具備可維護性與可擴充性。本層以相同哲學統籌 A（大腦）與 C（執行端）之間的所有訊號流，實現**可觀測、可重試、可熱插拔**的代理工作流。
 * **核心職責**：
   * **路由分配**：透過帳號 (Thread ID) 將對話綁定至指定的 C 電腦 IP。
   * **工作流控制**：執行 Planner (LLM思考) → Executor (派發代碼) 迴圈。
   * **錯誤恢復**：當 C 電腦回報 Aspen 執行錯誤，或模型 JSON 格式損壞時，觸發 `Fallback` 節點要求大腦重新修正。
   * **對話記憶**：維護多輪對話上下文，並在對話過長時觸發 `Summarizer` 壓縮記憶。
+* **未來開發重點（Harness Engineering Roadmap）**：
+  * **多工具節點擴充**：將 Aspen COM、Input File 解析、Sensitivity Analysis 等操作封裝為獨立 Tool Node，透過線束路由動態派發。
+  * **串流輸出支援**：實作 Server-Sent Events (SSE) 將 LLM 思考過程即時推送至 C 電腦 GUI，提升使用者體驗。
+  * **多租戶 Session 隔離**：升級 `SESSION_WORKER_MAP` 為 Redis-backed 持久化方案，支援伺服器重啟後恢復會話狀態。
+  * **可觀測性 (Observability)**：整合 LangSmith 或自建 Tracing，記錄每個 Node 的輸入/輸出與耗時，方便診斷瓶頸。
 
 ### 💻 C 電腦：執行層與終端用戶 (Edge Node & Client)
 * **硬體定位**：工程師的 Windows 個人電腦 (安裝有 Aspen Plus 軟體)。
@@ -94,7 +101,7 @@ AILA/
 │       ├── aspen_lora_adapter/                    # 訓練產出的 LoRA adapter 權重
 │       └── logs/                                  # 訓練日誌
 │
-├── B_LangGraph/                                   # B 電腦：中樞控制層（協調伺服器）
+├── B_Harness/                                     # B 電腦：中樞控制層（Harness 協調伺服器）
 │   ├── agent_api.py                               # FastAPI 入口點，提供 /login 與 /chat 端點
 │   └── aspen_agent.py                             # LangGraph 狀態機核心，定義四大節點
 │
@@ -148,12 +155,12 @@ AILA/
 * **`A_LLM/training/train_lora.py`** — Unsloth `FastModel` + SFTTrainer 訓練主程式；使用 `train_on_responses_only` 僅對 Assistant 回覆計算 Loss
 * **`A_LLM/training/configs/lora_config.yaml`** — LoRA 超參數配置：`r=64`、`lora_alpha=64`、bf16（MoE 架構禁用 QLoRA）
 
-### 2. B 電腦 (控制伺服器) 檔案
+### 2. B 電腦 (Harness 協調伺服器) 檔案
 * **`agent_api.py`**
   * **功能**：對外提供 RESTful API 服務的進入點。
   * **特點**：包含簡易的帳號密碼驗證資料庫 (`VALID_USERS`)。提供 `/login` (登入驗證) 與 `/chat` (對話接收與轉交 LangGraph) 兩個核心端點。
 * **`aspen_agent.py`**
-  * **功能**：系統的心臟，定義 LangGraph 狀態機 (`StateGraph`)。
+  * **功能**：系統的心臟，定義 LangGraph 狀態機 (`StateGraph`)，為 Harness 層的核心線束調度邏輯。
   * **特點**：
     * 定義四大節點：`planner_node` (呼叫大腦)、`executor_node` (遠端派發)、`fallback_node` (錯誤重試)、`summarizer_node` (記憶壓縮)。
     * 內建 `AspenOutputParser`，可剝離 `<think>` 區塊並提取 JSON。
