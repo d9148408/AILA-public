@@ -100,7 +100,7 @@ AILA/
 │
 └── C_Client/                                      # C 電腦：執行層與終端用戶
     ├── aspen_client_app.py                        # Tkinter GUI + FastAPI Worker 雙執行緒客戶端
-    ├── requirements.txt                           # PY311 完整套件清單（pip install -r 安裝）
+    ├── AILA_environment.yml                       # conda 環境設定檔（conda env create -f 安裝）
     └── nthu_client.ovpn                           # OpenVPN 設定檔 ⚠️ gitignored，向管理員申請
 ```
 
@@ -166,6 +166,9 @@ AILA/
     * 採用 Split Tunneling，**僅將內網网段流量導入 VPN**，其餘網路流量仍走本機路由，不影響一般上網。
     * 需搭配帳號密碼（`auth-user-pass`）與憑證雙重驗證。
     * **安全性說明**：檔案內含個人私鑰（Encrypted Private Key）與憑證，屬高度敏感資料，禁止上傳至任何公開平台。
+* **`AILA_environment.yml`**
+  * **功能**： conda 環境設定檔，一行指令建立完整 Python 3.11 環境。
+  * **用法**：`conda env create -f AILA_environment.yml`
 * **`aspen_client_app.py`**
   * **功能**：將 FastAPI Worker 與 Tkinter GUI 雙執行緒打包的客戶端程式。
   * **特點**：
