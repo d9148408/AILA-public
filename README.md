@@ -24,18 +24,21 @@
 ### ⚙️ B 電腦：中樞控制層 (Harness Orchestration Server)
 * **硬體定位**：應用程式伺服器 (IP: `<B_SERVER_IP>`)。
 * **運行服務**：LangGraph 狀態機代理 (Agent) + FastAPI (`Port: 8001`)。
-* **Harness Engineering 設計理念**：
-  * **Harness**（線束）概念源自電子工程中的「線束設計」——將零散的電線按功能分組、綁束、走線，使複雜的電氣系統具備可維護性與可擴充性。本層以相同哲學統籌 A（大腦）與 C（執行端）之間的所有訊號流，實現**可觀測、可重試、可熱插拔**的代理工作流。
+* **駕馭工程（Harness Engineering）設計理念**：
+  * **駕馭工程**是 AI 工程界近期凝煉的核心實踐。OpenAI 的 [Harness Engineering](https://openai.com/index/harness-engineering/) 與 Anthropic 的 [Harness Design](https://www.anthropic.com/engineering/harness-design-long-running-apps) 均指出：當代 AI 工程師的工作重心已從「親手撰寫程式碼」轉變為「**設計環境、定義意圖、構建回饋迴圈**（Design environments, specify intent, build feedback loops）」——**人類掌舵，代理執行（Humans steer, agents execute）**。
+  * B 電腦正是此典範的體現：本層並不執行任何化工計算，而是透過**可觀測的 LangGraph 狀態機**，協調 A（大腦推理）與 C（本地執行）之間的所有訊號流，確保工作流具備**可重試、可還原、可審計**的特性。
+  * 依據 Anthropic 的多代理架構實踐，本層採用**職責分離**的節點設計——將「生成（Generator）」與「評估（Evaluator）」解耦，是防止模型陷入自我評估偏誤（self-evaluation bias）的關鍵。
 * **核心職責**：
   * **路由分配**：透過帳號 (Thread ID) 將對話綁定至指定的 C 電腦 IP。
-  * **工作流控制**：執行 Planner (LLM思考) → Executor (派發代碼) 迴圈。
+  * **工作流控制**：執行 Planner (LLM 思考) → Executor (派發代碼) 迴圈。
   * **錯誤恢復**：當 C 電腦回報 Aspen 執行錯誤，或模型 JSON 格式損壞時，觸發 `Fallback` 節點要求大腦重新修正。
-  * **對話記憶**：維護多輪對話上下文，並在對話過長時觸發 `Summarizer` 壓縮記憶。
-* **未來開發重點（Harness Engineering Roadmap）**：
-  * **多工具節點擴充**：將 Aspen COM、Input File 解析、Sensitivity Analysis 等操作封裝為獨立 Tool Node，透過線束路由動態派發。
+  * **對話記憶**：維護多輪對話上下文，並在對話過長時觸發 `Summarizer` 壓縮記憶（對應 Anthropic 的 Context Compaction 機制）。
+* **未來開發重點（駕馭工程 Roadmap）**：
+  * **評估節點（Evaluator Node）**：仿照 Anthropic 的「Generator–Evaluator 分離」模式，為 Aspen 執行結果新增獨立的評估代理，避免大腦對自身輸出產生樂觀偏誤（optimistic self-evaluation）。
+  * **可觀測性（Observability）**：參考 OpenAI 的本地可觀測堆疊設計，整合 LangSmith 或自建 Tracing，記錄每個 Node 的輸入輸出與耗時，讓整個工作流對人類與後續代理均「可讀、可診斷」。
   * **串流輸出支援**：實作 Server-Sent Events (SSE) 將 LLM 思考過程即時推送至 C 電腦 GUI，提升使用者體驗。
   * **多租戶 Session 隔離**：升級 `SESSION_WORKER_MAP` 為 Redis-backed 持久化方案，支援伺服器重啟後恢復會話狀態。
-  * **可觀測性 (Observability)**：整合 LangSmith 或自建 Tracing，記錄每個 Node 的輸入/輸出與耗時，方便診斷瓶頸。
+  * **架構精簡原則**：遵循「找到最簡有效方案，僅在必要時增加複雜度（find the simplest solution, only increase complexity when needed）」的準則，隨模型能力進化定期重新審視 Harness 架構，移除已不再必要的節點。
 
 ### 💻 C 電腦：執行層與終端用戶 (Edge Node & Client)
 * **硬體定位**：工程師的 Windows 個人電腦 (安裝有 Aspen Plus 軟體)。
@@ -160,7 +163,7 @@ AILA/
   * **功能**：對外提供 RESTful API 服務的進入點。
   * **特點**：包含簡易的帳號密碼驗證資料庫 (`VALID_USERS`)。提供 `/login` (登入驗證) 與 `/chat` (對話接收與轉交 LangGraph) 兩個核心端點。
 * **`aspen_agent.py`**
-  * **功能**：系統的心臟，定義 LangGraph 狀態機 (`StateGraph`)，為 Harness 層的核心線束調度邏輯。
+  * **功能**：系統的心臟，定義 LangGraph 狀態機 (`StateGraph`)，為駕馭工程層（Harness Layer）的核心調度邏輯。
   * **特點**：
     * 定義四大節點：`planner_node` (呼叫大腦)、`executor_node` (遠端派發)、`fallback_node` (錯誤重試)、`summarizer_node` (記憶壓縮)。
     * 內建 `AspenOutputParser`，可剝離 `<think>` 區塊並提取 JSON。
