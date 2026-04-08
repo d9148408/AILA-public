@@ -245,41 +245,33 @@ AILA/
 ### 前置需求
 
 * Windows 10 / 11 (64-bit)
-* [Miniconda](https://docs.conda.io/en/latest/miniconda.html) 或 Anaconda（用於建立 Python 3.11 虛擬環境）
+* [Miniconda](https://docs.conda.io/en/latest/miniconda.html) 或 Anaconda（用於建立 conda 虛擬環境）
 * Aspen Plus 軟體（已安裝於本機，含 COM 介面授權）
 * OpenVPN（詳見上方 [VPN 連線設定](#-vpn-連線設定-openvpn) 章節）
 
-### 步驟一：建立 Python 3.11 虛擬環境
-
-```powershell
-# 建立名為 PY311 的 conda 虛擬環境
-conda create -n PY311 python=3.11 -y
-conda activate PY311
-```
-
-### 步驟二：安裝所有相依套件
+### 步驟一：使用環境設定檔建立 conda 虛擬環境
 
 ```powershell
 # 切換至 C_Client 資料夾
 cd C_Client
 
-# 安裝 requirements.txt 內所有套件
-pip install -r requirements.txt
+# 依 AILA_environment.yml 建立並安裝完整環境（名稱：AILA，Python 3.11）
+conda env create -f AILA_environment.yml
 ```
 
-> `C_Client/requirements.txt` 為由開發環境直接匯出的完整套件清單（Python 3.11），包含 `fastapi`、`uvicorn`、`langchain`、`langgraph`、`pywin32`、`pillow`、`json_repair` 等所有必要依賴。
+> `C_Client/AILA_environment.yml` 為由開發環境直接匯出的完整 conda 環境設定檔，包含 `fastapi`、`uvicorn`、`langchain`、`langgraph`、`pywin32`、`pillow`、`json-repair` 等所有必要依賴，一行指令即可完成全套安裝。
 
-### 步驟三：確認 pywin32 後處理
+### 步驟二：確認 pywin32 後處理
 
 ```powershell
 # 安裝後執行 pywin32 post-install（Windows COM 介面必要步驟）
-python C:\Users\<你的使用者名稱>\miniconda3\envs\PY311\Scripts\pywin32_postinstall.py -install
+python C:\Users\<你的使用者名稱>\miniconda3\envs\AILA\Scripts\pywin32_postinstall.py -install
 ```
 
-### 步驟四：啟動用戶端程式
+### 步驟三：啟動用戶端程式
 
 ```powershell
-conda activate PY311
+conda activate AILA
 python aspen_client_app.py
 ```
 
@@ -298,7 +290,7 @@ python aspen_client_app.py
    * 開啟 OpenVPN Connect 或 OpenVPN GUI，連線 `nthu_client.ovpn`。
    * 確認可以 ping 通 B 伺服器後，再進行下一步。
 4. **[使用者] 啟動 C 電腦用戶端**
-   * 確認 Conda 虛擬環境 `PY311` 已依照上方「C 電腦環境安裝」章節設定完畢。
+   * 確認 Conda 虛擬環境 `AILA` 已依照上方「C 電腦環境安裝」章節設定完畢。
    * 在 C 電腦 (Windows) 執行：`python aspen_client_app.py` (或執行打包好的 `.exe` 檔)。
    * 確認本機的 Aspen Plus 軟體已開啟，並載入相關模擬檔。
    * 於 GUI 介面輸入帳號密碼（向管理員索取），登入後即可開始對話！
